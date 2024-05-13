@@ -1,10 +1,11 @@
-package htmlparser
+package blind
 
 import (
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jae2274/goutils/terr"
 )
@@ -38,4 +39,31 @@ func ParseReviewCount(countStr string) (int32, error) {
 	}
 
 	return int32(count), nil
+}
+
+func ParseReviewUser(str string) (string, string, time.Time, error) {
+	dateParts := strings.Split(str, "-")
+
+	if len(dateParts) != 2 {
+		return "", "", time.Time{}, terr.New(fmt.Sprintf("invalid review user format. got: %s", str))
+	}
+
+	dateStr := strings.TrimSpace(dateParts[1])
+	date, err := time.Parse("2006.01.02", dateStr)
+
+	if err != nil {
+		return "", "", time.Time{}, err
+	}
+
+	userParts := strings.Split(dateParts[0], "·")
+
+	if len(userParts) < 3 {
+		return "", "", time.Time{}, terr.New(fmt.Sprintf("invalid review user format. got: %s", str))
+	}
+
+	userId := strings.TrimSpace(userParts[1])
+
+	jobType := strings.TrimSpace(strings.Join(userParts[2:], "·"))
+
+	return userId, jobType, date, nil
 }
