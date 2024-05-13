@@ -12,6 +12,9 @@ import (
 //go:embed reviewPage.html
 var reviewPage string
 
+//go:embed noneReviewPage.html
+var noneReviewPage string
+
 func TestParseScore(t *testing.T) {
 	t.Run("return review score from html", func(t *testing.T) {
 		scoreReq, err := blind.ParseScoreHtml(reviewPage)
@@ -22,6 +25,7 @@ func TestParseScore(t *testing.T) {
 			CompanyName: "구글코리아",
 			AvgScore:    46,
 			ReviewCount: 507,
+			PageCount:   17,
 		}
 
 		// require.Equal(t, expected, scoreReq)
@@ -29,6 +33,7 @@ func TestParseScore(t *testing.T) {
 		require.Equal(t, expected.CompanyName, scoreReq.CompanyName)
 		require.Equal(t, expected.AvgScore, scoreReq.AvgScore)
 		require.Equal(t, expected.ReviewCount, scoreReq.ReviewCount)
+		require.Equal(t, expected.PageCount, scoreReq.PageCount)
 	})
 
 	t.Run("return score from score string", func(t *testing.T) {
@@ -149,7 +154,7 @@ func TestParseReviews(t *testing.T) {
 		}
 	})
 
-	t.Run("parse reviews", func(t *testing.T) {
+	t.Run("parse existed review page", func(t *testing.T) {
 		reviews, err := blind.ParseReviews(reviewPage)
 		require.NoError(t, err)
 
@@ -160,4 +165,10 @@ func TestParseReviews(t *testing.T) {
 		require.Equal(t, len(expected), len(reviews))
 	})
 
+	t.Run("parse empty review page", func(t *testing.T) {
+		reviews, err := blind.ParseReviews(noneReviewPage)
+		require.NoError(t, err)
+
+		require.Empty(t, reviews)
+	})
 }

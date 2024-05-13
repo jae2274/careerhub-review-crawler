@@ -2,7 +2,10 @@ package blind
 
 import (
 	"errors"
+	"io"
+	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,8 +15,12 @@ import (
 )
 
 func ParseScoreHtml(htmlStr string) (*source.ReviewScore, error) {
+	return ParseScoreReader(strings.NewReader(htmlStr))
+}
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlStr))
+func ParseScoreReader(rc io.Reader) (*source.ReviewScore, error) {
+
+	doc, err := goquery.NewDocumentFromReader(rc)
 	if err != nil {
 		return nil, err
 	}
@@ -34,11 +41,17 @@ func ParseScoreHtml(htmlStr string) (*source.ReviewScore, error) {
 		return nil, err
 	}
 
+	pageCount, err := findPageCount(doc)
+	if err != nil {
+		return nil, err
+	}
+
 	return &source.ReviewScore{
 		Site:        "blind",
 		CompanyName: companyName,
 		AvgScore:    score,
 		ReviewCount: reviewCount,
+		PageCount:   pageCount,
 	}, nil
 }
 
@@ -76,8 +89,39 @@ func findReviewCount(doc *goquery.Selection) (int32, error) {
 	return ParseReviewCount(countStr)
 }
 
+func findPageCount(doc *goquery.Document) (int32, error) {
+	navEle := doc.Find(".paginate > .nav")
+
+	if len(navEle.Nodes) < 2 {
+		return 0, terr.New("page count not found")
+	}
+
+	for _, attr := range navEle.Nodes[1].Attr {
+		if attr.Key == "href" {
+			u, err := url.Parse(attr.Val)
+			if err != nil {
+				return 0, err
+			}
+
+			pageCountStr := u.Query().Get("page")
+			if pageCountStr == "" {
+				return 0, terr.New("page count not found")
+			}
+
+			pageCount, err := strconv.Atoi(pageCountStr)
+
+			return int32(pageCount), err
+		}
+	}
+
+	return 0, terr.New("page count not found")
+}
 func ParseReviews(html string) ([]*source.Review, error) {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	return ParseReviewsReader(strings.NewReader(html))
+}
+
+func ParseReviewsReader(rc io.Reader) ([]*source.Review, error) {
+	doc, err := goquery.NewDocumentFromReader(rc)
 	if err != nil {
 		return nil, err
 	}
