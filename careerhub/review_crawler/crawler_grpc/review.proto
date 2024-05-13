@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package careerhub.review_service.crawler_grpc;
+option go_package = "careerhub/review_service/crawler_grpc";
+
+import "google/protobuf/empty.proto";
+
+service ReviewGrpc{
+    rpc getCrawlingTasks(GetCrawlingTasksRequest) returns (GetCrawlingTasksResponse);
+    rpc setReviewScore(SetReviewScoreRequest) returns  (google.protobuf.Empty);
+    rpc setNotExist(SetNotExistRequest) returns (google.protobuf.Empty);
+
+    rpc getCrawlingTargets(GetCrawlingTargetsRequest) returns (GetCrawlingTargetsResponse);
+    rpc saveCompanyReviews(SaveCompanyReviewsRequest) returns (SaveCompanyReviewsResponse);
+}
+
+message GetCrawlingTasksRequest{
+    string site = 1;
+}
+
+message GetCrawlingTasksResponse{
+    repeated string companyNames = 1;
+}
+
+message SetReviewScoreRequest{
+    string site = 1;
+    string companyName = 2;
+    int32 avgScore = 3;
+    int32 reviewCount = 4;
+}
+
+message SetNotExistRequest{
+    string site = 1;
+    string companyName = 2;
+}
+
+message GetCrawlingTargetsRequest{
+    string site = 1;
+}
+
+message GetCrawlingTargetsResponse{
+    repeated string companyNames = 1;
+}
+
+
+
+message SaveCompanyReviewsRequest{
+    string site = 1;
+    string companyName = 2;
+    repeated Review reviews = 4;
+}
+
+message Review {
+    int32 score = 1;
+    string summary = 2;
+    bool employmentStatus = 3;
+    string reviewUserId = 4;
+    string jobType = 5;
+    int64 unixMilli = 6;
+}
+
+message SaveCompanyReviewsResponse{
+    int32 insertedCount = 1;
+}
