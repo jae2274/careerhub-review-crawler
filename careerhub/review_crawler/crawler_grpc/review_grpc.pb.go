@@ -28,6 +28,7 @@ type ReviewGrpcClient interface {
 	SetNotExist(ctx context.Context, in *SetNotExistRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetCrawlingTargets(ctx context.Context, in *GetCrawlingTargetsRequest, opts ...grpc.CallOption) (*GetCrawlingTargetsResponse, error)
 	SaveCompanyReviews(ctx context.Context, in *SaveCompanyReviewsRequest, opts ...grpc.CallOption) (*SaveCompanyReviewsResponse, error)
+	FinishCrawlingTask(ctx context.Context, in *FinishCrawlingTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type reviewGrpcClient struct {
@@ -83,6 +84,15 @@ func (c *reviewGrpcClient) SaveCompanyReviews(ctx context.Context, in *SaveCompa
 	return out, nil
 }
 
+func (c *reviewGrpcClient) FinishCrawlingTask(ctx context.Context, in *FinishCrawlingTaskRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/careerhub.review_service.crawler_grpc.ReviewGrpc/finishCrawlingTask", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ReviewGrpcServer is the server API for ReviewGrpc service.
 // All implementations must embed UnimplementedReviewGrpcServer
 // for forward compatibility
@@ -92,6 +102,7 @@ type ReviewGrpcServer interface {
 	SetNotExist(context.Context, *SetNotExistRequest) (*emptypb.Empty, error)
 	GetCrawlingTargets(context.Context, *GetCrawlingTargetsRequest) (*GetCrawlingTargetsResponse, error)
 	SaveCompanyReviews(context.Context, *SaveCompanyReviewsRequest) (*SaveCompanyReviewsResponse, error)
+	FinishCrawlingTask(context.Context, *FinishCrawlingTaskRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedReviewGrpcServer()
 }
 
@@ -113,6 +124,9 @@ func (UnimplementedReviewGrpcServer) GetCrawlingTargets(context.Context, *GetCra
 }
 func (UnimplementedReviewGrpcServer) SaveCompanyReviews(context.Context, *SaveCompanyReviewsRequest) (*SaveCompanyReviewsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveCompanyReviews not implemented")
+}
+func (UnimplementedReviewGrpcServer) FinishCrawlingTask(context.Context, *FinishCrawlingTaskRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinishCrawlingTask not implemented")
 }
 func (UnimplementedReviewGrpcServer) mustEmbedUnimplementedReviewGrpcServer() {}
 
@@ -217,6 +231,24 @@ func _ReviewGrpc_SaveCompanyReviews_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReviewGrpc_FinishCrawlingTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FinishCrawlingTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReviewGrpcServer).FinishCrawlingTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/careerhub.review_service.crawler_grpc.ReviewGrpc/finishCrawlingTask",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReviewGrpcServer).FinishCrawlingTask(ctx, req.(*FinishCrawlingTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ReviewGrpc_ServiceDesc is the grpc.ServiceDesc for ReviewGrpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -243,6 +275,10 @@ var ReviewGrpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "saveCompanyReviews",
 			Handler:    _ReviewGrpc_SaveCompanyReviews_Handler,
+		},
+		{
+			MethodName: "finishCrawlingTask",
+			Handler:    _ReviewGrpc_FinishCrawlingTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

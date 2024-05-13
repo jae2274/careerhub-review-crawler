@@ -12,6 +12,7 @@ service ReviewGrpc{
 
     rpc getCrawlingTargets(GetCrawlingTargetsRequest) returns (GetCrawlingTargetsResponse);
     rpc saveCompanyReviews(SaveCompanyReviewsRequest) returns (SaveCompanyReviewsResponse);
+    rpc finishCrawlingTask(FinishCrawlingTaskRequest) returns (google.protobuf.Empty);
 }
 
 message GetCrawlingTasksRequest{
@@ -61,4 +62,9 @@ message Review {
 
 message SaveCompanyReviewsResponse{
     int32 insertedCount = 1;
+}
+
+message FinishCrawlingTaskRequest{
+    string site = 1;
+    string companyName = 2;
 }
