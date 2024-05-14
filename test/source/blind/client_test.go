@@ -15,15 +15,15 @@ func TestBlindSource(t *testing.T) {
 
 		blindSource := blind.NewBlindSource(apiactor.NewApiActor(ctx, 10))
 
-		reviewScore, isExisted, err := blindSource.GetReviewScore("구글코리아")
+		result, err := blindSource.GetReviewScore("구글코리아")
 		require.NoError(t, err)
-		require.True(t, isExisted)
+		require.True(t, result.IsExist)
 
-		require.Equal(t, "blind", reviewScore.Site)
-		require.Equal(t, "구글코리아", reviewScore.CompanyName)
-		require.Greater(t, reviewScore.AvgScore, int32(0))
-		require.Greater(t, reviewScore.ReviewCount, int32(0))
-		require.Greater(t, reviewScore.PageCount, int32(0))
+		require.Equal(t, "blind", result.ReviewScore.Site)
+		require.Equal(t, "구글코리아", result.ReviewScore.CompanyName)
+		require.Greater(t, result.ReviewScore.AvgScore, int32(0))
+		require.Greater(t, result.ReviewScore.ReviewCount, int32(0))
+		require.Greater(t, result.ReviewScore.PageCount, int32(0))
 	})
 
 	t.Run("return not exist company review score", func(t *testing.T) {
@@ -31,9 +31,9 @@ func TestBlindSource(t *testing.T) {
 
 		blindSource := blind.NewBlindSource(apiactor.NewApiActor(ctx, 10))
 
-		_, isExisted, err := blindSource.GetReviewScore("구글코리아아")
+		result, err := blindSource.GetReviewScore("구글코리아아")
 		require.NoError(t, err)
-		require.False(t, isExisted)
+		require.False(t, result.IsExist)
 	})
 
 	t.Run("return exist company reviews", func(t *testing.T) {
@@ -41,10 +41,10 @@ func TestBlindSource(t *testing.T) {
 
 		blindSource := blind.NewBlindSource(apiactor.NewApiActor(ctx, 10))
 
-		reviews, err := blindSource.GetReviews("구글코리아", 1)
+		reviewList, err := blindSource.GetReviews("구글코리아", 1)
 
 		require.NoError(t, err)
-		require.NotEmpty(t, reviews)
+		require.NotEmpty(t, reviewList.Reviews)
 	})
 
 	t.Run("return empty company reviews", func(t *testing.T) {
@@ -52,9 +52,9 @@ func TestBlindSource(t *testing.T) {
 
 		blindSource := blind.NewBlindSource(apiactor.NewApiActor(ctx, 10))
 
-		reviews, err := blindSource.GetReviews("구글코리아", 100)
+		reviewList, err := blindSource.GetReviews("구글코리아", 100)
 
 		require.NoError(t, err)
-		require.Empty(t, reviews)
+		require.Empty(t, reviewList.Reviews)
 	})
 }

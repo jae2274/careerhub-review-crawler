@@ -1,11 +1,22 @@
 package source
 
+type ReviewScoreResult struct {
+	IsExist     bool
+	ReviewScore *ReviewScore
+}
+
 type ReviewScore struct {
 	Site        string
 	CompanyName string
 	AvgScore    int32
 	ReviewCount int32
 	PageCount   int32
+}
+
+type ReviewList struct {
+	CompanyName string
+	Page        int
+	Reviews     []*Review
 }
 
 type Review struct {
@@ -18,6 +29,6 @@ type Review struct {
 }
 
 type Source interface {
-	GetReviewScore(companyName string) (*ReviewScore, bool, error)
-	GetReviews(companyName string, page int) ([]*Review, error)
+	GetReviewScore(companyName string) (*ReviewScoreResult, error)
+	GetReviews(companyName string, page int) (*ReviewList, error)
 }

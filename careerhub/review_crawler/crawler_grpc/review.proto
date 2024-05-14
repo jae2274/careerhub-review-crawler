@@ -28,6 +28,7 @@ message SetReviewScoreRequest{
     string companyName = 2;
     int32 avgScore = 3;
     int32 reviewCount = 4;
+    int32 totalPageCount = 5;
 }
 
 message SetNotExistRequest{
@@ -40,10 +41,13 @@ message GetCrawlingTargetsRequest{
 }
 
 message GetCrawlingTargetsResponse{
-    repeated string companyNames = 1;
+    repeated CrawlingTarget targets = 1;
 }
 
-
+message CrawlingTarget{
+    string companyName = 1;
+    int32 totalPageCount = 2;
+}
 
 message SaveCompanyReviewsRequest{
     string site = 1;
