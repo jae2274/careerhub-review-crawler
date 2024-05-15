@@ -26,10 +26,10 @@ func ParseScoreReader(rc io.Reader) (*source.ReviewScore, error) {
 	}
 	companyEle := doc.Find(".company")
 
-	companyName, err := findCompanyName(companyEle)
-	if err != nil {
-		return nil, err
-	}
+	// companyName, err := findCompanyName(companyEle)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	ratingNoEle := companyEle.Find(".rating_no")
 	score, err := findReviewScore(ratingNoEle)
@@ -48,7 +48,6 @@ func ParseScoreReader(rc io.Reader) (*source.ReviewScore, error) {
 
 	return &source.ReviewScore{
 		Site:        "blind",
-		CompanyName: companyName,
 		AvgScore:    score,
 		ReviewCount: reviewCount,
 		PageCount:   pageCount,
@@ -70,7 +69,7 @@ var scoreRegex = regexp.MustCompile(`^([0-4]\.\d|5\.0)$`)
 func findReviewScore(doc *goquery.Selection) (int32, error) {
 	scoreEle := doc.ChildrenFiltered(".rate")
 	if len(scoreEle.Nodes) == 0 {
-		return 0, terr.New("score not found")
+		return 0, nil
 	}
 
 	scoreStr := strings.TrimSpace(scoreEle.Nodes[0].LastChild.Data)
@@ -81,7 +80,7 @@ func findReviewScore(doc *goquery.Selection) (int32, error) {
 func findReviewCount(doc *goquery.Selection) (int32, error) {
 	countEle := doc.ChildrenFiltered(".count")
 	if len(countEle.Nodes) == 0 {
-		return 0, terr.New("review count not found")
+		return 0, nil
 	}
 
 	countStr := strings.TrimSpace(countEle.Nodes[0].LastChild.Data)
@@ -91,6 +90,10 @@ func findReviewCount(doc *goquery.Selection) (int32, error) {
 
 func findPageCount(doc *goquery.Document) (int32, error) {
 	navEle := doc.Find(".paginate > .nav")
+
+	if len(navEle.Nodes) == 0 {
+		return 1, nil
+	}
 
 	if len(navEle.Nodes) < 2 {
 		return 0, terr.New("page count not found")

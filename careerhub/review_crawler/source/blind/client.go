@@ -15,6 +15,19 @@ func NewBlindSource(api *apiactor.ApiActor) *BlindSource {
 	return &BlindSource{api: api}
 }
 
+type WrappedError struct {
+	CompanyName string
+	Err         error
+}
+
+func newWrappedError(companyName string, err error) *WrappedError {
+	return &WrappedError{CompanyName: companyName, Err: err}
+}
+
+func (we *WrappedError) Error() string {
+	return fmt.Sprintf("company: %s. %s", we.CompanyName, we.Err.Error())
+}
+
 func (bs *BlindSource) GetReviewScore(companyName string) (*source.ReviewScoreResult, error) {
 	rc, err := bs.api.Call(&apiactor.Request{
 		Method: "GET",
@@ -23,17 +36,17 @@ func (bs *BlindSource) GetReviewScore(companyName string) (*source.ReviewScoreRe
 
 	if err != nil {
 		if apiactor.IsHttpErrorWithStatusCode(err, 404) {
-			return &source.ReviewScoreResult{IsExist: false}, nil
+			return &source.ReviewScoreResult{CompanyName: companyName, IsExist: false}, nil
 		}
-		return nil, err
+		return nil, newWrappedError(companyName, err)
 	}
 
 	score, err := ParseScoreReader(rc)
 	if err != nil {
-		return nil, err
+		return nil, newWrappedError(companyName, err)
 	}
 
-	return &source.ReviewScoreResult{ReviewScore: score, IsExist: true}, nil
+	return &source.ReviewScoreResult{CompanyName: companyName, ReviewScore: score, IsExist: true}, nil
 }
 
 func (bs *BlindSource) GetReviews(companyName string, page int) (*source.ReviewList, error) {
@@ -43,12 +56,12 @@ func (bs *BlindSource) GetReviews(companyName string, page int) (*source.ReviewL
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, newWrappedError(companyName, err)
 	}
 
 	reviews, err := ParseReviewsReader(rc)
 	if err != nil {
-		return nil, err
+		return nil, newWrappedError(companyName, err)
 	}
 
 	return &source.ReviewList{CompanyName: companyName, Page: page, Reviews: reviews}, nil

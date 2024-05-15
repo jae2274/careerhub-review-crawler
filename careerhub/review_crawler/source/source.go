@@ -2,12 +2,12 @@ package source
 
 type ReviewScoreResult struct {
 	IsExist     bool
+	CompanyName string
 	ReviewScore *ReviewScore
 }
 
 type ReviewScore struct {
 	Site        string
-	CompanyName string
 	AvgScore    int32
 	ReviewCount int32
 	PageCount   int32

@@ -22,7 +22,6 @@ func TestParseScore(t *testing.T) {
 
 		expected := &source.ReviewScore{
 			Site:        "blind",
-			CompanyName: "구글코리아",
 			AvgScore:    46,
 			ReviewCount: 507,
 			PageCount:   17,
@@ -30,7 +29,6 @@ func TestParseScore(t *testing.T) {
 
 		// require.Equal(t, expected, scoreReq)
 		require.Equal(t, expected.Site, scoreReq.Site)
-		require.Equal(t, expected.CompanyName, scoreReq.CompanyName)
 		require.Equal(t, expected.AvgScore, scoreReq.AvgScore)
 		require.Equal(t, expected.ReviewCount, scoreReq.ReviewCount)
 		require.Equal(t, expected.PageCount, scoreReq.PageCount)

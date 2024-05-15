@@ -20,7 +20,7 @@ func TestBlindSource(t *testing.T) {
 		require.True(t, result.IsExist)
 
 		require.Equal(t, "blind", result.ReviewScore.Site)
-		require.Equal(t, "구글코리아", result.ReviewScore.CompanyName)
+		require.Equal(t, "구글코리아", result.CompanyName)
 		require.Greater(t, result.ReviewScore.AvgScore, int32(0))
 		require.Greater(t, result.ReviewScore.ReviewCount, int32(0))
 		require.Greater(t, result.ReviewScore.PageCount, int32(0))

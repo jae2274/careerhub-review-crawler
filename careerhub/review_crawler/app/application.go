@@ -43,14 +43,14 @@ func (a *application) SetReviewScores(ctx context.Context) error {
 		if result.IsExist {
 			return a.grpcClient.SetReviewScore(ctx, &crawler_grpc.SetReviewScoreRequest{
 				Site:        SiteName,
-				CompanyName: result.ReviewScore.CompanyName,
+				CompanyName: result.CompanyName,
 				AvgScore:    result.ReviewScore.AvgScore,
 				ReviewCount: result.ReviewScore.ReviewCount,
 			})
 		} else {
 			return a.grpcClient.SetNotExist(ctx, &crawler_grpc.SetNotExistRequest{
 				Site:        SiteName,
-				CompanyName: result.ReviewScore.CompanyName,
+				CompanyName: result.CompanyName,
 			})
 		}
 	})
