@@ -18,7 +18,7 @@ import (
 const (
 	SiteName = "blind"
 
-	appName     = "api-composer"
+	appName     = "review-crawler"
 	serviceName = "careerhub"
 
 	ctxKeyTraceID = string(mw.CtxKeyTraceID)
