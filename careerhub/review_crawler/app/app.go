@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	SiteName = "blind"
-
 	appName     = "review-crawler"
 	serviceName = "careerhub"
 
@@ -57,9 +55,9 @@ func Run(ctx context.Context) {
 	)
 	checkErr(ctx, err)
 
-	client := crawler_grpc.NewReviewGrpcClient(conn)
+	svc := crawler_grpc.NewReviewGrpcService(crawler_grpc.NewReviewGrpcClient(conn))
 
-	application := NewApplication(client, blind.NewBlindSource(apiactor.NewApiActor(ctx, 3000)))
+	application := NewApplication(svc, blind.NewBlindSource(apiactor.NewApiActor(ctx, 3000)))
 
 	llog.Info(ctx, "Start SetReviewScores")
 	err = application.SetReviewScores(ctx)

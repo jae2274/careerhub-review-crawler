@@ -8,51 +8,46 @@ import (
 	"github.com/jae2274/careerhub-review-crawler/careerhub/review_crawler/source"
 	"github.com/jae2274/goutils/cchan/pipe"
 	"github.com/jae2274/goutils/llog"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type application struct {
-	grpcClient  crawler_grpc.ReviewGrpcClient
-	blindSource source.Source
+type Application struct {
+	grpcService *crawler_grpc.ReviewGrpcService
+	src         source.Source
 }
 
-func NewApplication(grpcClient crawler_grpc.ReviewGrpcClient, blindSource source.Source) *application {
-	return &application{
-		grpcClient:  grpcClient,
-		blindSource: blindSource,
+func NewApplication(grpcService *crawler_grpc.ReviewGrpcService, blindSource source.Source) *Application {
+	return &Application{
+		grpcService: grpcService,
+		src:         blindSource,
 	}
 }
 
-func (a *application) SetReviewScores(ctx context.Context) error {
-	tasks, err := a.grpcClient.GetCrawlingTasks(ctx, &crawler_grpc.GetCrawlingTasksRequest{Site: SiteName})
+func (a *Application) SetReviewScores(ctx context.Context) error {
+
+	companyNames, err := a.grpcService.GetCrawlingTasks(ctx, a.src.GetSiteName())
 	if err != nil {
 		return err
 	}
 
-	taskChan := make(chan string, len(tasks.CompanyNames))
-	for _, task := range tasks.CompanyNames {
+	taskChan := make(chan string, len(companyNames))
+	for _, task := range companyNames {
 		taskChan <- task
 	}
 	close(taskChan)
 
 	step1 := pipe.NewStep(nil, func(companyName string) (*source.ReviewScoreResult, error) {
-		return a.blindSource.GetReviewScore(companyName)
+		return a.src.GetReviewScore(companyName)
 	})
 
-	step2 := pipe.NewStep(nil, func(result *source.ReviewScoreResult) (*emptypb.Empty, error) {
+	step2 := pipe.NewStep(nil, func(result *source.ReviewScoreResult) (struct{}, error) {
+		var err error = nil
 		if result.IsExist {
-			return a.grpcClient.SetReviewScore(ctx, &crawler_grpc.SetReviewScoreRequest{
-				Site:        SiteName,
-				CompanyName: result.CompanyName,
-				AvgScore:    result.ReviewScore.AvgScore,
-				ReviewCount: result.ReviewScore.ReviewCount,
-			})
+			err = a.grpcService.SetReviewScore(ctx, a.src.GetSiteName(), result.CompanyName, result.ReviewScore)
 		} else {
-			return a.grpcClient.SetNotExist(ctx, &crawler_grpc.SetNotExistRequest{
-				Site:        SiteName,
-				CompanyName: result.CompanyName,
-			})
+			err = a.grpcService.SetNotExist(ctx, a.src.GetSiteName(), result.CompanyName)
 		}
+
+		return struct{}{}, err
 	})
 
 	finishChan, errChan := pipe.Pipeline2(ctx, taskChan, step1, step2)
@@ -64,8 +59,8 @@ func (a *application) SetReviewScores(ctx context.Context) error {
 	return nil
 }
 
-func (a *application) SaveReviews(ctx context.Context) error {
-	targets, err := a.grpcClient.GetCrawlingTargets(ctx, &crawler_grpc.GetCrawlingTargetsRequest{Site: SiteName})
+func (a *Application) SaveReviews(ctx context.Context) error {
+	targets, err := a.grpcService.GetCrawlingTargets(ctx, a.src.GetSiteName())
 	if err != nil {
 		return err
 	}
@@ -77,8 +72,8 @@ func (a *application) SaveReviews(ctx context.Context) error {
 
 	targetChan := make(chan targetPage)
 	go func() {
-		for _, target := range targets.Targets {
-			for page := target.TotalPageCount; page > 0; page-- {
+		for _, target := range targets {
+			for page := target.TotalPageCount; page > 1; page-- {
 				targetChan <- targetPage{companyName: target.CompanyName, page: page}
 			}
 		}
@@ -86,27 +81,16 @@ func (a *application) SaveReviews(ctx context.Context) error {
 	}()
 
 	step1 := pipe.NewStep(nil, func(target targetPage) (*source.ReviewList, error) {
-		return a.blindSource.GetReviews(target.companyName, int(target.page))
+		return a.src.GetReviews(target.companyName, int(target.page))
 	})
 
-	step2 := pipe.NewStep(nil, func(reviews *source.ReviewList) (*emptypb.Empty, error) {
-		_, err := a.grpcClient.SaveCompanyReviews(ctx, convertReviewListToGrpc(reviews))
+	step2 := pipe.NewStep(nil, func(reviews *source.ReviewList) (struct{}, error) {
+		err := a.grpcService.SaveCompanyReviews(ctx, a.src.GetSiteName(), reviews)
 		if err != nil {
-			return nil, err
+			return struct{}{}, err
 		}
 
-		if reviews.Page == 1 {
-			_, err := a.grpcClient.FinishCrawlingTask(ctx, &crawler_grpc.FinishCrawlingTaskRequest{
-				Site:        SiteName,
-				CompanyName: reviews.CompanyName,
-			})
-
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return &emptypb.Empty{}, nil
+		return struct{}{}, nil
 	})
 
 	finishChan, errChan := pipe.Pipeline2(ctx, targetChan, step1, step2)
@@ -116,25 +100,6 @@ func (a *application) SaveReviews(ctx context.Context) error {
 	checkErrorCount(ctx, errChan, 10)
 
 	return nil
-}
-
-func convertReviewListToGrpc(reviews *source.ReviewList) *crawler_grpc.SaveCompanyReviewsRequest {
-	grpcReviews := make([]*crawler_grpc.Review, len(reviews.Reviews))
-	for i, review := range reviews.Reviews {
-		grpcReviews[i] = &crawler_grpc.Review{
-			Score:            review.Score,
-			Summary:          review.Summary,
-			EmploymentStatus: review.EmploymentStatus,
-			ReviewUserId:     review.ReviewUserId,
-			JobType:          review.JobType,
-			UnixMilli:        review.UnixMilli,
-		}
-	}
-
-	return &crawler_grpc.SaveCompanyReviewsRequest{
-		CompanyName: reviews.CompanyName,
-		Reviews:     grpcReviews,
-	}
 }
 
 func drainChannels[T any](ctx context.Context, c <-chan T) {

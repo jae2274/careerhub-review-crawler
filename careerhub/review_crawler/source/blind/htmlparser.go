@@ -46,11 +46,21 @@ func ParseScoreReader(rc io.Reader) (*source.ReviewScore, error) {
 		return nil, err
 	}
 
+	if pageCount == 0 && reviewCount > 0 {
+		pageCount = 1
+	}
+
+	reviews, err := parseReviews(doc)
+	if err != nil {
+		return nil, err
+	}
+
 	return &source.ReviewScore{
 		Site:        "blind",
 		AvgScore:    score,
 		ReviewCount: reviewCount,
 		PageCount:   pageCount,
+		PageReviews: reviews,
 	}, nil
 }
 
@@ -92,7 +102,7 @@ func findPageCount(doc *goquery.Document) (int32, error) {
 	navEle := doc.Find(".paginate > .nav")
 
 	if len(navEle.Nodes) == 0 {
-		return 1, nil
+		return 0, nil
 	}
 
 	if len(navEle.Nodes) < 2 {
@@ -129,6 +139,10 @@ func ParseReviewsReader(rc io.Reader) ([]*source.Review, error) {
 		return nil, err
 	}
 
+	return parseReviews(doc)
+}
+
+func parseReviews(doc *goquery.Document) ([]*source.Review, error) {
 	review_items := doc.Find(".review_item")
 	reviews := make([]*source.Review, 0)
 	errs := make([]error, 0)
@@ -199,7 +213,17 @@ func findSummary(doc *goquery.Selection) (string, error) {
 		return "", terr.New("summary not found")
 	}
 
-	return strings.TrimSpace(nodes[0].LastChild.Data), nil
+	summary := strings.TrimSpace(nodes[0].LastChild.Data)
+
+	if len(summary) > 3 && strings.HasPrefix(summary, "“") {
+		summary = summary[3:]
+	}
+
+	if len(summary) > 3 && strings.HasSuffix(summary, "”") {
+		summary = summary[:len(summary)-3]
+	}
+
+	return summary, nil
 }
 
 func findEmploymentStatus(doc *goquery.Selection) (bool, error) {

@@ -11,6 +11,7 @@ type ReviewScore struct {
 	AvgScore    int32
 	ReviewCount int32
 	PageCount   int32
+	PageReviews []*Review
 }
 
 type ReviewList struct {
@@ -29,6 +30,7 @@ type Review struct {
 }
 
 type Source interface {
+	GetSiteName() string
 	GetReviewScore(companyName string) (*ReviewScoreResult, error)
 	GetReviews(companyName string, page int) (*ReviewList, error)
 }

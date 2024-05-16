@@ -28,6 +28,10 @@ func (we *WrappedError) Error() string {
 	return fmt.Sprintf("company: %s. %s", we.CompanyName, we.Err.Error())
 }
 
+func (bs *BlindSource) GetSiteName() string {
+	return "blind"
+}
+
 func (bs *BlindSource) GetReviewScore(companyName string) (*source.ReviewScoreResult, error) {
 	rc, err := bs.api.Call(&apiactor.Request{
 		Method: "GET",
