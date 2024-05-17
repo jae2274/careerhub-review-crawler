@@ -46,7 +46,7 @@ func Run(ctx context.Context) {
 	err = initLogger(ctx)
 	checkErr(ctx, err)
 
-	llog.Info(ctx, "Start review crawler")
+	llog.Info(ctx, "Start application")
 
 	conn, err := grpc.NewClient(envVars.ReviewGrpcEndpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -66,6 +66,8 @@ func Run(ctx context.Context) {
 	llog.Info(ctx, "Start SaveReviews")
 	err = application.SaveReviews(ctx)
 	checkErr(ctx, err)
+
+	llog.Info(ctx, "Finish application")
 }
 
 func checkErr(ctx context.Context, err error) {
