@@ -54,9 +54,7 @@ func (a *Application) SetReviewScores(ctx context.Context) error {
 
 	go drainChannels(ctx, finishChan)
 
-	checkErrorCount(ctx, errChan, 10)
-
-	return nil
+	return checkErrorCount(ctx, errChan, 10)
 }
 
 func (a *Application) SaveReviews(ctx context.Context) error {
@@ -97,9 +95,7 @@ func (a *Application) SaveReviews(ctx context.Context) error {
 
 	go drainChannels(ctx, finishChan)
 
-	checkErrorCount(ctx, errChan, 10)
-
-	return nil
+	return checkErrorCount(ctx, errChan, 10)
 }
 
 func drainChannels[T any](ctx context.Context, c <-chan T) {
